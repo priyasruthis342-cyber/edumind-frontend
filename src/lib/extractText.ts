@@ -1,4 +1,5 @@
 import { extractImageWithGemini } from './geminiApi';
+import { cleanMathFormatting } from './mathFormatter';
 
 export type ExtractedKind = 'text' | 'pdf' | 'image';
 
@@ -14,11 +15,15 @@ const OCR_ASSET_DIR = `${import.meta.env.BASE_URL}tesseract/`;
  */
 export function isLegibleAcademicText(text: string): boolean {
   if (!text || text.trim().length < 8) return false;
+  // If text contains mathematical equations or calculations, it is genuine academic math
+  if (/[=+\-*\/^√²³]/.test(text) && /\d/.test(text)) {
+    return true;
+  }
   const words = text.split(/\s+/).filter(w => /[a-zA-Z\u0B80-\u0BFF\u0900-\u097F]/.test(w));
   if (words.length < 2) return false;
 
   // Identify suspicious 1-2 letter non-standard fragments (e.g. 'cg', 'G0', '3_f', 'Ld', 'ANE')
-  const validTwoLetterWords = new Set(['in', 'on', 'at', 'to', 'is', 'an', 'as', 'or', 'by', 'we', 'it', 'he', 'if', 'my', 'no', 'so', 'up', 'do', 'go', 'am', 'of', 'us']);
+  const validTwoLetterWords = new Set(['in', 'on', 'at', 'to', 'is', 'an', 'as', 'or', 'by', 'we', 'it', 'he', 'if', 'my', 'no', 'so', 'up', 'do', 'go', 'am', 'of', 'us', 'pi', 'bf', 'll', 'rr', 'lr', 'rl', 'dx', 'dy', 'dt']);
   const junkWords = words.filter(w => {
     const clean = w.replace(/[^a-zA-Z]/g, '').toLowerCase();
     return clean.length <= 2 && !validTwoLetterWords.has(clean);
@@ -260,10 +265,13 @@ export async function extractTextFromFile(
 ): Promise<ExtractedFile> {
   const name = file.name.toLowerCase();
   if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
-    return { text: await extractPdf(file, onProgress), kind: 'pdf' };
+    const raw = await extractPdf(file, onProgress);
+    return { text: cleanMathFormatting(raw), kind: 'pdf' };
   }
   if (file.type.startsWith('image/')) {
-    return { text: await extractImage(file, onProgress), kind: 'image' };
+    const raw = await extractImage(file, onProgress);
+    return { text: cleanMathFormatting(raw), kind: 'image' };
   }
-  return { text: await file.text(), kind: 'text' };
+  const raw = await file.text();
+  return { text: cleanMathFormatting(raw), kind: 'text' };
 }

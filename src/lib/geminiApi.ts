@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { getBackendUrl } from './apiConfig';
+import { cleanMathFormatting } from './mathFormatter';
 
 const BACKEND_URL = getBackendUrl();
 
@@ -247,7 +248,7 @@ export async function fetchGeminiChat(
     }
 
     const data: GeminiChatResponse = await res.json();
-    return data.answer || 'No response generated.';
+    return cleanMathFormatting(data.answer || 'No response generated.');
   } catch (err: unknown) {
     clearTimeout(timeoutId);
     if ((err as { name?: string })?.name === 'AbortError') {
@@ -288,7 +289,7 @@ export async function extractImageWithGemini(file: Blob | File): Promise<string>
     }
 
     const data = await res.json();
-    return data.text || '';
+    return cleanMathFormatting(data.text || '');
   } catch (err) {
     clearTimeout(timeoutId);
     throw err;
