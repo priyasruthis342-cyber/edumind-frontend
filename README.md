@@ -46,3 +46,4 @@ Build output is saved to the `dist/` directory.
 - **Build Command:** `npm run build`
 - **Output Directory:** `dist`
 - **Environment Variables:** Set `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_RAZORPAY_KEY_ID`.
+
